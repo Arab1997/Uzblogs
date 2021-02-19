@@ -1,24 +1,27 @@
-package myway.group.uzblogs
+package myway.group.uzblogs.screen
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.android.synthetic.main.activity_main.*
-import myway.group.uzblogs.adapter.PostAdapter
+import myway.group.uzblogs.R
 import myway.group.uzblogs.adapter.UserAdapter
+import myway.group.uzblogs.adapter.UserAdapterListener
 import myway.group.uzblogs.adapter.UsersAdapter
 import myway.group.uzblogs.api.ApiService
 import myway.group.uzblogs.api.BaseResponse
-import myway.group.uzblogs.model.PostModel
 import myway.group.uzblogs.model.UsersModel
+import myway.group.uzblogs.screen.detail.DetailActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class MainActivity : AppCompatActivity() {
-    //TEST
-   /* val userList = listOf(
+class MainActivity : AppCompatActivity(), SwipeRefreshLayout.OnRefreshListener {
+        //TEST
+         /* val userList = listOf(
         UsersModel("","","","",""),
         UsersModel("","","","",""),
         UsersModel("","","","",""),
@@ -41,11 +44,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+          //TEST
+         /*  recyclerPosts.layoutManager = LinearLayoutManager(this)
+             recyclerPosts.adapter = PostAdapter(postList)*/
 
-
-      /*  recyclerPosts.layoutManager = LinearLayoutManager(this)
-        recyclerPosts.adapter = PostAdapter(postList)*/
-
+        swipe.setOnRefreshListener(this)
+        swipe.isRefreshing = true
         loadUsers()
         loadPosts()
     }
@@ -56,11 +60,18 @@ class MainActivity : AppCompatActivity() {
                 call: Call<BaseResponse<List<UsersModel>>>,
                 response: Response<BaseResponse<List<UsersModel>>>
             ) {
-                recyclerUsers.layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
-                recyclerUsers.adapter = UserAdapter(response.body()?.data ?: emptyList())   //agar null kepqosa empty list bervoradi
+                swipe.isRefreshing = false
+                recyclerUsers.layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false) //agar null kepqosa empty list bervoradi
+                recyclerUsers.adapter = UsersAdapter(response.body()?.data ?: emptyList(),  object :UserAdapterListener{
+                    override fun onClick(item: UsersModel) {
+                        val intent  = Intent(this@MainActivity, DetailActivity::class.java)
+                        intent.putExtra("extra_data", item)
+                        startActivity(intent)
+                    }
+                })
             }
-
             override fun onFailure(call: Call<BaseResponse<List<UsersModel>>>, t: Throwable) {
+                swipe.isRefreshing = false
                 Toast.makeText(this@MainActivity, t.localizedMessage, Toast.LENGTH_LONG).show()
             }
         })
@@ -72,13 +83,26 @@ class MainActivity : AppCompatActivity() {
                 call: Call<BaseResponse<List<UsersModel>>>,
                 response: Response<BaseResponse<List<UsersModel>>>
             ) {
-                recyclerPosts.layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
-                recyclerPosts.adapter = UsersAdapter(response.body()?.data ?: emptyList())   //agar null kepqosa empty list bervoradi
+                swipe.isRefreshing = false
+                recyclerPosts.layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false) //agar null kepqosa empty list bervoradi
+                recyclerPosts.adapter = UsersAdapter(response.body()?.data ?: emptyList(), object: UserAdapterListener{
+                    override fun onClick(item: UsersModel) {
+                        val intent  = Intent(this@MainActivity, DetailActivity::class.java)
+                        intent.putExtra("extra_data", item)
+                        startActivity(intent)
+                    }
+                })
             }
 
             override fun onFailure(call: Call<BaseResponse<List<UsersModel>>>, t: Throwable) {
+                swipe.isRefreshing = false
                 Toast.makeText(this@MainActivity, t.localizedMessage, Toast.LENGTH_LONG).show()
             }
         })
+    }
+
+    override fun onRefresh() {
+        loadUsers()
+        loadPosts()
     }
 }

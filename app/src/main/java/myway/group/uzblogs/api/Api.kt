@@ -7,6 +7,7 @@ import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
+import retrofit2.http.Path
 
 interface Api {
    /* @Headers("api-id:602cb43775e0ac47cc8762a8")
@@ -18,4 +19,7 @@ interface Api {
 
     @GET("users?delay=3")
     fun getPosts(): Call<BaseResponse<List<UsersModel>>>
+
+    @GET("users/{user_id}")
+    fun getPostByUser(@Path("user_id") id: String): Call<BaseResponse<List<UsersModel>>>
 }
